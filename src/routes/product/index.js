@@ -12,5 +12,15 @@ router.use(authenticationV2)
 /////////////////////////////////////////////////
 
 router.post('', asyncHandler(productController.createProduct))
+router.post('/publish/:id', asyncHandler(productController.publishProduct))
+router.post('/unpublish/:id', asyncHandler(productController.unpublishProduct))
+
+// QUERY //
+router.get('/drafts/all', asyncHandler(productController.getAllDraftsForShop))
+router.get(
+    '/published/all',
+    asyncHandler(productController.getAllPublishForShop)
+)
+// QUERY //
 
 module.exports = router
