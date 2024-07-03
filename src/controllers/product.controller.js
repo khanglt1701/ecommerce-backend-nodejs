@@ -31,7 +31,7 @@ class ProductController {
         }).send(res)
     }
 
-    publishProduct = async (req, res, next) => {
+    publishProductByShop = async (req, res, next) => {
         new SuccessResponse({
             message: 'Publish Product success!',
             metadata: await ProductServiceV2.publishProductByShop({
@@ -41,7 +41,7 @@ class ProductController {
         }).send(res)
     }
 
-    unpublishProduct = async (req, res, next) => {
+    unpublishProductByShop = async (req, res, next) => {
         new SuccessResponse({
             message: 'Unpublish Product success!',
             metadata: await ProductServiceV2.unpublishProductByShop({
@@ -74,6 +74,13 @@ class ProductController {
             metadata: await ProductServiceV2.findAllPublishForShop({
                 product_shop: req.user.userId,
             }),
+        }).send(res)
+    }
+
+    getListSearchProduct = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Get getListSearchProduct success!',
+            metadata: await ProductServiceV2.getListSearchProduct(req.params),
         }).send(res)
     }
     // END QUERY //

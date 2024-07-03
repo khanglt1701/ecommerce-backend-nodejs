@@ -54,17 +54,20 @@ const queryProduct = async ({ query, limit, skip }) => {
         .exec()
 }
 
-const searchProducts = async ({ keySearch }) => {
+const searchProductByUser = async ({ keySearch }) => {
     const regexSearch = new RegExp(keySearch)
-    const result = await product.find({})
-    return await product
-        .find(query)
-        .populate('product_shop', 'name email -_id')
-        .sort({ updateAt: -1 })
-        .skip(skip)
-        .limit(limit)
+    const result = await product
+        .find(
+            {
+                $text: { $search: regexSearch },
+                isPublish: true,
+            },
+            { score: { $meta: 'textScore' } }
+        )
+        .sort({ score: { $meta: 'textScore' } })
         .lean()
-        .exec()
+
+    return result
 }
 
 module.exports = {
@@ -72,5 +75,5 @@ module.exports = {
     findAllPublishForShop,
     publishProductByShop,
     unpublishProductByShop,
-    searchProducts,
+    searchProductByUser,
 }
