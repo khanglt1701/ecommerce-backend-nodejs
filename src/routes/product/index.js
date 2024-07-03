@@ -14,11 +14,12 @@ router.get(
 router.get('', asyncHandler(productController.getAllProducts))
 router.get('/:product_id', asyncHandler(productController.getProduct))
 
-// authentication //
+// AUTHENTICATION //
 router.use(authenticationV2)
-/////////////////////////////////////////////////
+// AUTHENTICATION //
 
 router.post('', asyncHandler(productController.createProduct))
+router.patch('/:productId', asyncHandler(productController.updateProduct))
 router.post(
     '/publish/:id',
     asyncHandler(productController.publishProductByShop)

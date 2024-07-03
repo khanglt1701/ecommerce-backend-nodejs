@@ -6,7 +6,6 @@ const { product, clothing, electronic } = require('../models/product.model')
 // define Factory class to create product
 class ProducFactory {
     static async createProduct(type, payload) {
-        console.log('payload:', payload)
         switch (type) {
             case 'Electronics':
                 return new Electronic(payload).createProduct()

@@ -1,30 +1,30 @@
-"use strict"
+'use strict'
 
-const shopModel = require("../models/shop.model")
-const bcrypt = require("bcrypt")
-const crypto = require("crypto")
+const shopModel = require('../models/shop.model')
+const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 const {
     removeKeyById,
     findByRefreshTokenUsed,
     findByRefreshToken,
     deleteKeyById,
     createKeyToken,
-} = require("./keyToken.service")
-const { createTokenPair, verifyJWT } = require("../auth/authUtils")
-const { type } = require("os")
-const { getInfoData } = require("../utils")
+} = require('./keyToken.service')
+const { createTokenPair, verifyJWT } = require('../auth/authUtils')
+const { type } = require('os')
+const { getInfoData } = require('../utils')
 const {
     BadRequestError,
     AuthFailureError,
     ForbiddenError,
-} = require("../core/error.response")
-const { findByEmail } = require("./shop.service")
+} = require('../core/error.response')
+const { findByEmail } = require('./shop.service')
 
 const RoleShop = {
-    SHOP: "SHOP",
-    WRITER: "WRITER",
-    EDITOR: "EDITOR",
-    ADMIN: "ADMIN",
+    SHOP: 'SHOP',
+    WRITER: 'WRITER',
+    EDITOR: 'EDITOR',
+    ADMIN: 'ADMIN',
 }
 
 class AccessService {
@@ -33,17 +33,17 @@ class AccessService {
         if (keyStore.refreshTokensUsed.includes(refreshToken)) {
             // remove all token with userId
             await deleteKeyById(userId)
-            throw new ForbiddenError("Something wrong happed !! Pls relogin")
+            throw new ForbiddenError('Something wrong happed !! Pls relogin')
         }
 
         if (keyStore.refreshToken !== refreshToken) {
-            throw new AuthFailureError("Shop not registered!")
+            throw new AuthFailureError('Shop not registered!')
         }
 
         // check userId
         const foundShop = await findByEmail({ email })
         if (!foundShop) {
-            throw new AuthFailureError("Shop not registered")
+            throw new AuthFailureError('Shop not registered')
         }
 
         // create a new pair token
@@ -84,21 +84,20 @@ class AccessService {
     static login = async ({ email, password, refreshToken = null }) => {
         // 1
         const foundShop = await findByEmail({ email })
-        console.log(foundShop)
 
         if (!foundShop) {
-            throw new BadRequestError("Shop is not resgisterd")
+            throw new BadRequestError('Shop is not resgisterd')
         }
 
         // 2
         const match = bcrypt.compare(password, foundShop.password)
         if (!match) {
-            throw new AuthFailureError("Authen error")
+            throw new AuthFailureError('Authen error')
         }
 
         // 3
-        const privateKey = crypto.randomBytes(64).toString("hex")
-        const publicKey = crypto.randomBytes(64).toString("hex")
+        const privateKey = crypto.randomBytes(64).toString('hex')
+        const publicKey = crypto.randomBytes(64).toString('hex')
 
         // 4
         const { _id: userId } = foundShop
@@ -117,7 +116,7 @@ class AccessService {
 
         return {
             shop: getInfoData({
-                fields: ["_id", "name", "email"],
+                fields: ['_id', 'name', 'email'],
                 object: foundShop,
             }),
             tokens,
@@ -130,7 +129,7 @@ class AccessService {
         const holderShop = await shopModel.findOne({ email }).lean()
 
         if (holderShop) {
-            throw new BadRequestError("Error: Shop already registered!")
+            throw new BadRequestError('Error: Shop already registered!')
         }
 
         const passwordHash = await bcrypt.hash(password, 10)
@@ -159,8 +158,8 @@ class AccessService {
             //     }
             // )
 
-            const privateKey = crypto.randomBytes(64).toString("hex")
-            const publicKey = crypto.randomBytes(64).toString("hex")
+            const privateKey = crypto.randomBytes(64).toString('hex')
+            const publicKey = crypto.randomBytes(64).toString('hex')
 
             const keyStore = await createKeyToken({
                 userId: newShop._id,
@@ -169,7 +168,7 @@ class AccessService {
             })
 
             if (!keyStore) {
-                throw new BadRequestError("Error: keyStore error")
+                throw new BadRequestError('Error: keyStore error')
             }
 
             // create token pair
@@ -182,7 +181,7 @@ class AccessService {
 
             return {
                 shop: getInfoData({
-                    fields: ["_id", "name", "email"],
+                    fields: ['_id', 'name', 'email'],
                     object: newShop,
                 }),
                 tokens,

@@ -16,7 +16,9 @@ const {
     searchProductByUser,
     findAllProducts,
     findProduct,
+    updateProductById,
 } = require('../models/repositories/product.repo')
+const { removeUndefindedObject, updateNestedObjectParser } = require('../utils')
 
 // define Factory class to create product
 class ProducFactory {
@@ -35,7 +37,14 @@ class ProducFactory {
         return new productClass(payload).createProduct()
     }
 
-    static async updateProduct() {}
+    static async updateProduct(type, productId, payload) {
+        const productClass = ProducFactory.productRegistry[type]
+        if (!productClass) {
+            throw new BadRequestError(`Invalid Product Types ${type}`)
+        }
+
+        return new productClass(payload).updateProduct(productId)
+    }
 
     // PUT //
     static async publishProductByShop({ product_shop, product_id }) {
@@ -108,13 +117,21 @@ class Product {
     async createProduct(product_id) {
         return await product.create({ ...this, _id: product_id })
     }
+
+    async updateProduct(productId, payload) {
+        return await updateProductById({
+            productId,
+            payload: payload,
+            model: product,
+        })
+    }
 }
 
 // define sub-class for difference product types Clothing
 class Clothing extends Product {
     async createProduct() {
         const newClothing = await clothing.create({
-            ...this.product_attributes,
+            ...this,
             product_shop: this.product_shop,
         })
         if (!newClothing) {
@@ -128,13 +145,36 @@ class Clothing extends Product {
 
         return newProduct
     }
+
+    async updateProduct(productId) {
+        // 1. Remove attributes has null and undefined
+        const objectParams = removeUndefindedObject(this)
+        // 2. Check where need updating
+        if (objectParams.product_attributes) {
+            // update child
+            await updateProductById({
+                productId,
+                payload: updateNestedObjectParser(
+                    objectParams.product_attributes
+                ),
+                model: clothing,
+            })
+        }
+
+        const updateProduct = await super.updateProduct(
+            productId,
+            updateNestedObjectParser(objectParams)
+        )
+
+        return updateProduct
+    }
 }
 
 // define sub-class for difference product types Electronic
 class Electronic extends Product {
     async createProduct() {
         const newElectronic = await electronic.create({
-            ...this.product_attributes,
+            ...this,
             product_shop: this.product_shop,
         })
         if (!newElectronic) {
@@ -148,12 +188,35 @@ class Electronic extends Product {
 
         return newProduct
     }
+
+    async updateProduct(productId) {
+        // 1. Remove attributes has null and undefined
+        const objectParams = removeUndefindedObject(this)
+        // 2. Check where need updating
+        if (objectParams.product_attributes) {
+            // update child
+            await updateProductById({
+                productId,
+                payload: updateNestedObjectParser(
+                    objectParams.product_attributes
+                ),
+                model: electronic,
+            })
+        }
+
+        const updateProduct = await super.updateProduct(
+            productId,
+            updateNestedObjectParser(objectParams)
+        )
+
+        return updateProduct
+    }
 }
 
 class Furniture extends Product {
     async createProduct() {
         const newFurniture = await furniture.create({
-            ...this.product_attributes,
+            ...this,
             product_shop: this.product_shop,
         })
         if (!newFurniture) {
@@ -166,6 +229,29 @@ class Furniture extends Product {
         }
 
         return newProduct
+    }
+
+    async updateProduct(productId) {
+        // 1. Remove attributes has null and undefined
+        const objectParams = removeUndefindedObject(this)
+        // 2. Check where need updating
+        if (objectParams.product_attributes) {
+            // update child
+            await updateProductById({
+                productId,
+                payload: updateNestedObjectParser(
+                    objectParams.product_attributes
+                ),
+                model: furniture,
+            })
+        }
+
+        const updateProduct = await super.updateProduct(
+            productId,
+            updateNestedObjectParser(objectParams)
+        )
+
+        return updateProduct
     }
 }
 
