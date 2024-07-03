@@ -14,6 +14,8 @@ const {
     publishProductByShop,
     unpublishProductByShop,
     searchProductByUser,
+    findAllProducts,
+    findProduct,
 } = require('../models/repositories/product.repo')
 
 // define Factory class to create product
@@ -32,6 +34,8 @@ class ProducFactory {
 
         return new productClass(payload).createProduct()
     }
+
+    static async updateProduct() {}
 
     // PUT //
     static async publishProductByShop({ product_shop, product_id }) {
@@ -56,6 +60,26 @@ class ProducFactory {
 
     static async getListSearchProduct({ keySearch }) {
         return await searchProductByUser({ keySearch })
+    }
+
+    static async findAllProducts({
+        limit = 50,
+        sort = 'ctime',
+        page = 1,
+        filter = { isPublish: true },
+        select, // ['product_name', 'product_price', 'product_thumb']
+    }) {
+        return await findAllProducts({
+            limit,
+            sort,
+            page,
+            filter,
+            select: ['product_name', 'product_price', 'product_thumb'],
+        })
+    }
+
+    static async findProduct({ product_id }) {
+        return await findProduct({ product_id, unSelect: ['__v'] })
     }
 }
 
