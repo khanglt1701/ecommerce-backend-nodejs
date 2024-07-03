@@ -64,7 +64,7 @@ class ProducFactory {
     }
 
     static async findAllPublishForShop({ product_shop, limit = 50, skip = 0 }) {
-        const query = { product_shop, isPublish: true }
+        const query = { product_shop, isPublished: true }
         return await findAllPublishForShop({ query, limit, skip })
     }
 
@@ -76,7 +76,7 @@ class ProducFactory {
         limit = 50,
         sort = 'ctime',
         page = 1,
-        filter = { isPublish: true },
+        filter = { isPublished: true },
         select, // ['product_name', 'product_price', 'product_thumb']
     }) {
         return await findAllProducts({

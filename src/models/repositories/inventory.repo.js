@@ -1,6 +1,6 @@
 'use strict'
 
-const { getSelectData, unGetSelectData } = require('../../utils')
+const { getSelectData, getUnSelectData } = require('../../utils')
 const { inventory } = require('../inventory.model')
 const { Types } = require('mongoose')
 

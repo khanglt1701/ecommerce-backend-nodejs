@@ -1,6 +1,6 @@
 'use strict'
 
-const { getSelectData, unGetSelectData } = require('../../utils')
+const { getSelectData, getUnSelectData } = require('../../utils')
 const { product, electronic, clothing, furniture } = require('../product.model')
 const { Types } = require('mongoose')
 
@@ -29,7 +29,7 @@ const findAllProducts = async ({ limit, sort, page, filter, select }) => {
 const findProduct = async ({ product_id, unSelect }) => {
     return await product
         .findById(product_id)
-        .select(unGetSelectData(unSelect))
+        .select(getUnSelectData(unSelect))
         .lean()
 }
 
@@ -52,7 +52,7 @@ const publishProductByShop = async ({ product_shop, product_id }) => {
     }
 
     foundShop.isDraft = false
-    foundShop.isPublish = true
+    foundShop.isPublished = true
     const { modifiedCount } = await foundShop.updateOne(foundShop)
 
     return modifiedCount
@@ -68,7 +68,7 @@ const unpublishProductByShop = async ({ product_shop, product_id }) => {
     }
 
     foundShop.isDraft = true
-    foundShop.isPublish = false
+    foundShop.isPublished = false
     const { modifiedCount } = await foundShop.updateOne(foundShop)
 
     return modifiedCount
@@ -91,7 +91,7 @@ const searchProductByUser = async ({ keySearch }) => {
         .find(
             {
                 $text: { $search: regexSearch },
-                isPublish: true,
+                isPublished: true,
             },
             { score: { $meta: 'textScore' } }
         )

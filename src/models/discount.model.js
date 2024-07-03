@@ -18,6 +18,8 @@ var discountSchema = new Schema(
         discount_users_used: { type: Array, default: [] },
         discount_max_uses_per_user: { type: Array, default: [] }, // Number of discount allowed per user
         discount_min_order_value: { type: Number, require: true },
+        discount_uses_count: { type: Number, require: true },
+        discount_max_value: { type: Number, require: true },
         discount_shop_id: { type: Schema.Types.ObjectId, ref: 'Shop' },
         discount_is_active: { type: Boolean, default: true },
         discount_applies_to: {
@@ -33,6 +35,4 @@ var discountSchema = new Schema(
     }
 )
 
-module.exports = {
-    inventory: model(DOCUMENT_NAME, discountSchema),
-}
+module.exports = model(DOCUMENT_NAME, discountSchema)
