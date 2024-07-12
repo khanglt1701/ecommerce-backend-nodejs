@@ -54,7 +54,7 @@ const publishProductByShop = async ({ product_shop, product_id }) => {
     foundShop.isDraft = false
     foundShop.isPublished = true
     const { modifiedCount } = await foundShop.updateOne(foundShop)
-
+    
     return modifiedCount
 }
 

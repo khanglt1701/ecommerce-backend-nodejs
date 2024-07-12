@@ -4,6 +4,7 @@ const { BadRequestError, NotFoundError } = require('../core/error.response')
 const discountModel = require('../models/discount.model')
 const {
     findAllDiscountCodeUnSelect,
+    checkDiscountExists,
 } = require('../models/repositories/discount.repo')
 const { findAllProducts } = require('../models/repositories/product.repo')
 const { convertToObjectIdMongodb } = require('../utils')
@@ -40,12 +41,12 @@ class DiscountService {
             max_uses_per_user,
         } = payload
 
-        if (
-            new Date() < new Date(start_date) ||
-            new Date() > new Date(end_date)
-        ) {
-            throw new BadRequestError('Discount code has expired!')
-        }
+        // if (
+        //     new Date() < new Date(start_date) ||
+        //     new Date() > new Date(end_date)
+        // ) {
+        //     throw new BadRequestError('Discount code has expired!')
+        // }
 
         if (new Date(start_date) >= new Date(end_date)) {
             throw new BadRequestError('Start date must be before end date!')
@@ -77,7 +78,7 @@ class DiscountService {
             discount_uses_count: uses_count,
             discount_max_uses_per_user: max_uses_per_user,
             discount_min_order_value: min_order_value || 0,
-            discount_shop_id: shopId,
+            discount_shopId: shopId,
             discount_is_active: is_active,
             discount_applies_to: applies_to,
             discount_product_ids: applies_to === 'all' ? [] : product_ids,
@@ -88,13 +89,7 @@ class DiscountService {
 
     static async updateDiscountCode() {}
 
-    static async getAllDiscountCodesWithProduct({
-        code,
-        shopId,
-        userId,
-        limit,
-        page,
-    }) {
+    static async getAllDiscountCodesWithProduct({ code, shopId, limit, page }) {
         // create index for discount_code
         const foundDiscount = await discountModel
             .findOne({
@@ -102,6 +97,7 @@ class DiscountService {
                 discount_shopId: convertToObjectIdMongodb(shopId),
             })
             .lean()
+            console.log('foundDiscount', foundDiscount)
 
         if (!foundDiscount || !foundDiscount.discount_is_active) {
             throw new NotFoundError('Discount does not exists!')
@@ -138,7 +134,7 @@ class DiscountService {
         return products
     }
 
-    static async getAllDiscountCodesByShop(payload) {
+    static async getAllDiscountCodesByShop({ shopId, limit, page }) {
         const discounts = await findAllDiscountCodeUnSelect({
             limit: +limit,
             page: +page,
@@ -151,6 +147,127 @@ class DiscountService {
         })
 
         return discounts
+    }
+
+    /**
+        Apply discount code
+        products = [
+        {
+            productId,
+            shopId,
+            quantity,
+            name,
+            price
+        }]
+     */
+    static async getDiscountAmount({ codeId, userId, shopId, products }) {
+        const foundDiscount = await checkDiscountExists({
+            model: discountModel,
+            filter: {
+                discount_code: codeId,
+                discount_shopId: convertToObjectIdMongodb(shopId),
+            },
+        })
+
+        if (!foundDiscount && !foundDiscount.discount_is_active) {
+            throw new NotFoundError('Discount does not exists!')
+        }
+
+        const {
+            discount_is_active,
+            discount_max_uses,
+            discount_start_date,
+            discount_end_date,
+            discount_min_order_value,
+            max_uses_per_user,
+            discount_users_used,
+            discount_type,
+            discount_value,
+        } = foundDiscount
+
+        if (!discount_is_active) {
+            throw new NotFoundError('Discount expired!')
+        }
+        if (!discount_max_uses) {
+            throw new NotFoundError('Discount are out!')
+        }
+
+        if (
+            new Date() < new Date(discount_start_date) ||
+            new Date() > new Date(discount_end_date)
+        ) {
+            throw new NotFoundError('Discount code has expired!')
+        }
+
+        let totalOrder = 0
+        if (discount_min_order_value > 0) {
+            totalOrder = products.reduce((acc, product) => {
+                return acc + product.quantity * product.price
+            }, 0)
+
+            if (totalOrder < discount_min_order_value) {
+                throw new NotFoundError(
+                    `Discount require a minium order value of ${discount_min_order_value}!`
+                )
+            }
+        }
+
+        if (max_uses_per_user > 0) {
+            const userPerDiscount = discount_users_used.find(
+                (user) => user.userId === userId
+            )
+
+            ///
+        }
+
+        const amount =
+            discount_type === 'fixed_amount'
+                ? discount_value
+                : totalOrder * (discount_value / 100)
+
+        return {
+            totalOrder,
+            discount: amount,
+            totalPrice: totalOrder - amount,
+        }
+    }
+
+    static async deleteDiscountCode({ shopId, codeId }) {
+        const deleted = await discountModel.findByIdAndDelete({
+            discount_code: codeId,
+            discount_shopId: convertToObjectIdMongodb(shopId),
+        })
+
+        return deleted
+    }
+
+    static async cancelDiscountCode({ codeId, shopId, userId }) {
+        const foundDiscount = await checkDiscountExists({
+            model: discountModel,
+            filter: {
+                discount_code: codeId,
+                discount_shopId: convertToObjectIdMongodb(shopId),
+            },
+        })
+
+        if (!foundDiscount && !foundDiscount.discount_is_active) {
+            throw new NotFoundError('Discount does not exists!')
+        }
+
+        const result = await discountModel.findByIdAndUpdate(
+            foundDiscount._id,
+            {
+                $pull: {
+                    discount_users_used: userId,
+                },
+                $inc: {
+                    discount_max_uses: 1,
+                    discount_uses_count: -1,
+                },
+            }
+        )
+
+        return result
     }
 }
 
