@@ -1,6 +1,10 @@
 'use strict'
 
-const { getSelectData, getUnSelectData } = require('../../utils')
+const {
+    getSelectData,
+    getUnSelectData,
+    convertToObjectIdMongodb,
+} = require('../../utils')
 const { product, electronic, clothing, furniture } = require('../product.model')
 const { Types } = require('mongoose')
 
@@ -54,7 +58,7 @@ const publishProductByShop = async ({ product_shop, product_id }) => {
     foundShop.isDraft = false
     foundShop.isPublished = true
     const { modifiedCount } = await foundShop.updateOne(foundShop)
-    
+
     return modifiedCount
 }
 
@@ -101,6 +105,12 @@ const searchProductByUser = async ({ keySearch }) => {
     return result
 }
 
+const getProductById = async (productId) => {
+    return await product
+        .findOne({ _id: convertToObjectIdMongodb(productId) })
+        .lean()
+}
+
 module.exports = {
     findAllDraftsForShop,
     findAllPublishForShop,
@@ -110,4 +120,5 @@ module.exports = {
     findAllProducts,
     findProduct,
     updateProductById,
+    getProductById,
 }

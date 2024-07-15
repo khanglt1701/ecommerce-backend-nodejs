@@ -23,10 +23,7 @@ var cartSchema = new Schema(
     },
     {
         collection: COLLECTION_NAME,
-        timeseries: {
-            createdAt: 'createdOn',
-            updatedAt: 'modifiedOn',
-        },
+        timestamps: true,
     }
 )
 
